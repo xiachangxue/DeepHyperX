@@ -8,23 +8,6 @@ A Python tool to perform deep learning experiments on various hyperspectral data
 
 ## Reference
 
-This toolbox was used for our review paper in Geoscience and Remote Sensing Magazine :
-> N. Audebert, B. Le Saux and S. Lefevre, "*Deep Learning for Classification of Hyperspectral Data: A Comparative Review*," in IEEE Geoscience and Remote Sensing Magazine, vol. 7, no. 2, pp. 159-173, June 2019.
-
-Bibtex format :
-
-> @article{8738045,
-author={N. {Audebert} and B. {Le Saux} and S. {Lefèvre}},
-journal={IEEE Geoscience and Remote Sensing Magazine},
-title={Deep Learning for Classification of Hyperspectral Data: A Comparative Review},
-year={2019},
-volume={7},
-number={2},
-pages={159-173},
-doi={10.1109/MGRS.2019.2912563},
-ISSN={2373-7468},
-month={June},}
-
 ## Requirements
 
 This tool is compatible with Python 2.7 and Python 3.5+.
@@ -149,5 +132,6 @@ Examples:
   * `python main.py --model hamida --dataset PaviaU --training_sample 0.5 --patch_size 7 --epoch 50 --cuda`
     This runs on GPU the 3D CNN from Hamida et al. on the Pavia University dataset with a patch size of 7, using 50% of the samples for training and optimizing for 50 epochs.
   * `python main.py --model vit --dataset PaviaU --training_sample 0.5 --patch_size 15 --epoch 50 --cuda 0`
+    This runs on GPU the Transformer ViT on the Pavia University dataset with a patch size of 15, using 50% of the samples for training and optimization for 50 epochs.
 
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/nshaud)
