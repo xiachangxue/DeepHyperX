@@ -1,0 +1,1 @@
+python main.py --model hit --dataset PaviaU --training_sample 0.1 --patch_size 15 --epoch 50 --cuda 0
