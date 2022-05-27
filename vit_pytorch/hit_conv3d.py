@@ -4,117 +4,8 @@ import torch.nn as nn
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.models.layers import DropPath, trunc_normal_
 from timm.models.registry import register_model
-import torch.nn.functional as F
-import math
-from torch.nn.modules.utils import _triple
-
-class attention3d(nn.Module):
-    def __init__(self, in_planes, ratios, K, temperature):
-        super(attention3d, self).__init__()
-        assert temperature%3==1
-        self.avgpool = nn.AdaptiveAvgPool3d(1)
-        if in_planes != 3:
-            hidden_planes = int(in_planes * 4)+1
-        else:
-            hidden_planes = K
-        self.fc1 = nn.Conv3d(in_planes, hidden_planes, 1, bias=False)
-        self.fc2 = nn.Conv3d(hidden_planes, K, 1, bias=False)
-        self.temperature = temperature
-
-    def updata_temperature(self):
-        if self.temperature!=1:
-            self.temperature -=3
-            print('Change temperature to:', str(self.temperature))
-
-    def forward(self, x):
-        x = self.avgpool(x)
-        x = self.fc1(x)
-        x = F.relu(x)
-        x = self.fc2(x).view(x.size(0), -1)
-        return F.softmax(x / self.temperature, 1)
-
-class nattention3d(nn.Module):
-    def __init__(self, in_planes):
-        super(nattention3d, self).__init__()
-        bn_eps = 1e-3
-        bn_mmt = 0.01
-        self.avgpool = nn.AdaptiveAvgPool3d((None, 1, 1))
-        k = in_planes * 4
-        self.a = nn.Conv3d(
-            in_channels=in_planes,
-            out_channels=k,
-            kernel_size=[3, 1, 1],
-            padding=[1, 0, 0],
-        )
-        self.bn = nn.BatchNorm3d(k)
-        self.relu = nn.ReLU(inplace=True)
-        self.b = nn.Conv3d(
-            in_channels=k,
-            out_channels=in_planes,
-            kernel_size=[1, 1, 1],
-            padding=[0, 0, 0],
-            bias=False
-        )
-        self.sig = nn.Sigmoid()
-        self.b.skip_init = True
-        self.b.weight.data.zero_()  # to make sure the initial values
-        # for the output is 1.
-    def forward(self, x):
-        y = x
-        x = self.avgpool(x)
-        x = self.a(x)
-        x = self.bn(x)
-        x = self.relu(x)
-        x = self.b(x)
-        x = self.sig(x)
-        y = x * y
-        return y
-
-
-class Dynamic_conv3d(nn.Module):
-    def __init__(self, in_planes, out_planes, kernel_size, ratio=0.25, stride=1, padding=0, dilation=1, groups=1, bias=False, K=4, temperature=4):
-        super(Dynamic_conv3d, self).__init__()
-        assert in_planes%groups==0
-        self.in_planes = in_planes
-        self.out_planes = out_planes
-        self.kernel_size = kernel_size
-        self.stride = stride
-        self.padding = padding
-        self.dilation = dilation
-        self.groups = groups
-        self.bias = bias
-        self.K = K
-        self.attention = attention3d(in_planes, ratio, K, temperature)
-        self.local = nattention3d(in_planes)
-
-        self.weight = nn.Parameter(torch.randn(K, out_planes, in_planes//groups, kernel_size[0], kernel_size[1], kernel_size[2]), requires_grad=True)
-        if bias:
-            self.bias = nn.Parameter(torch.Tensor(K, out_planes))
-        else:
-            self.bias = None
-
-    def update_temperature(self):
-        self.attention.updata_temperature()
-
-    def forward(self, x):
-        softmax_attention = self.attention(x)
-        y = self.local(x)
-        batch_size, in_planes, depth, height, width = x.size()
-        x = x.view(1, -1, depth, height, width)
-        y = y.view(1, -1, depth, height, width)
-        weight = self.weight.view(self.K, -1)
-
-        aggregate_weight = torch.mm(softmax_attention, weight).view(-1, self.in_planes, self.kernel_size[0], self.kernel_size[1], self.kernel_size[2])
-        if self.bias is not None:
-            aggregate_bias = torch.mm(softmax_attention, self.bias).view(-1)
-            output = F.conv3d(y, weight=aggregate_weight, bias=aggregate_bias, stride=self.stride, padding=self.padding,
-                              dilation=self.dilation, groups=self.groups*batch_size)
-        else:
-            output = F.conv3d(y, weight=aggregate_weight, bias=None, stride=self.stride, padding=self.padding,
-                              dilation=self.dilation, groups=self.groups * batch_size)
-
-        output = output.view(batch_size, self.out_planes, output.size(-3), output.size(-2), output.size(-1))
-        return output
+from einops.layers.torch import Rearrange
+from einops import rearrange, repeat
 
 
 def _cfg(url='', **kwargs):
@@ -133,6 +24,9 @@ default_cfgs = {
     'ViP_L': _cfg(crop_pct=0.875),
 }
 
+
+def pair(t):
+    return t if isinstance(t, tuple) else (t, t)
 
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
@@ -198,25 +92,25 @@ class ConvPermuteMLP(nn.Module):
 
         self.mlp_c = nn.Sequential(
             nn.Conv2d(dim, dim, kernel_size=(1, 3), stride=1, padding=(0, 1), dilation=1, groups=dim, bias=qkv_bias),
-           # nn.Conv2d(dim, dim, kernel_size=1, bias=qkv_bias),
         )
         self.mlp_h = nn.Sequential(
             nn.Conv2d(dim, dim, kernel_size=(3, 1), stride=1, padding=(1, 0), dilation=1, groups=dim, bias=qkv_bias),
-           # nn.Conv2d(dim, dim, kernel_size=1, bias=qkv_bias),
         )
         self.mlp_w = nn.Conv2d(dim, dim, kernel_size=1, bias=qkv_bias)
 
         self.reweight = Mlp(dim, dim // 4, dim * 3)
 
         self.proj = nn.Linear(dim, dim)
-        #self.proj = nn.Conv2d(dim, dim, kernel_size=1, bias=qkv_bias)
         self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x):
         B, H, W, C = x.shape
+
         x1 = x.reshape(B, H, W, C).permute(0, 3, 1, 2).reshape(B, C, H, W)
+
         h = self.mlp_c(x1)
         w = self.mlp_h(x1)
+
         c = self.mlp_w(x1)
 
         a = (h + w + c).flatten(2).mean(2)
@@ -224,7 +118,7 @@ class ConvPermuteMLP(nn.Module):
         a = self.reweight(a).reshape(B, C, 3).permute(2, 0, 1).softmax(dim=0).unsqueeze(2).unsqueeze(2).permute(0, 1, 4, 2, 3)
 
         x = h * a[0] + w * a[1] + c * a[2]
-        x = x.reshape(B, H, W, C)  
+        x = x.reshape(B, H, W, C)
         x = self.proj(x)
         x = self.proj_drop(x)
 
@@ -257,14 +151,16 @@ class PatchEmbed(nn.Module):
     """ Image to Patch Embedding
     """
 
-    def __init__(self, img_size=15, patch_size=3, in_chans=3, embed_dim=16):
+    def __init__(self, img_size=16, patch_size=2, in_chans=3, embed_dim=256):
         super().__init__()
         #### for GRSS (10, 9) pu(15,9)step(2,1) XA(46,30) for in(20,16)
-        self.proj1_1 = Dynamic_conv3d(in_planes=1, out_planes=4, kernel_size=(3, 3, 3), ratio=8, stride=(2, 2, 2), padding=1, )
-        self.proj2_1 = Dynamic_conv3d(in_planes=4, out_planes=8, kernel_size=(3, 3, 3), ratio=8, stride=(2, 1, 1), padding=1, )
+        self.proj = nn.Conv3d(1, 4, (10, 3, 3), stride=(2, 2, 2), padding=1)
+        #### for IN
+        self.proj2 = nn.Conv3d(4, 8, (9, 3, 3), stride=(2, 1, 1), padding=1)
+
     def forward(self, x):
-        x = self.proj1_1(x)
-        x = self.proj2_1(x)
+        x = self.proj(x)  # B, C, H, W
+        x = self.proj2(x)
         B, D, H, W, C = x.shape
         x = x.reshape(B, D*H, W, C)
         return x
@@ -299,7 +195,7 @@ def basic_blocks(dim, index, layers, segment_dim, mlp_ratio=3., qkv_bias=True, q
     return blocks
 
 
-class HiT(nn.Module):
+class HiTCONV3D(nn.Module):
     """ Vision Permutator
     """
 
@@ -334,8 +230,6 @@ class HiT(nn.Module):
         # Classifier head
         self.head = nn.Linear(embed_dims[-1], num_classes) if num_classes > 0 else nn.Identity()
         self.apply(self._init_weights)
-        self.pooling = nn.AdaptiveAvgPool2d(1)
-        self.conv_cls_head = nn.Linear(368, num_classes)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -366,7 +260,10 @@ class HiT(nn.Module):
         return x
 
     def forward(self, x):
+        # x = x.squeeze()
         x = self.forward_embeddings(x)
+        # B, H, W, C -> B, N, C
         x = self.forward_tokens(x)
         x = self.norm(x)
         return self.head(x.mean(1))
+
