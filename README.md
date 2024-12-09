@@ -124,7 +124,7 @@ The most useful arguments are:
 
 There are more parameters that can be used to control more finely the behaviour of the tool. See `python main.py -h` for more information.
 
-Examples:
+### Examples:
   * `python main.py --model SVM --dataset IndianPines --training_sample 0.3`
     This runs a grid search on SVM on the Indian Pines dataset, using 30% of the samples for training and the rest for testing. Results are displayed in the visdom panel.
   * `python main.py --model nn --dataset PaviaU --training_sample 0.1 --cuda`
@@ -132,60 +132,62 @@ Examples:
   * `python main.py --model hamida --dataset PaviaU --training_sample 0.5 --patch_size 7 --epoch 50 --cuda`
     This runs on GPU the 3D CNN from Hamida et al. on the Pavia University dataset with a patch size of 7, using 50% of the samples for training and optimizing for 50 epochs.
   * `python main.py --model vit --dataset PaviaU --training_sample 0.5 --patch_size 15 --epoch 50 --cuda 0`
-    This runs on GPU the Transformer ViT on the Pavia University dataset with a patch size of 15, using 50% of the samples for training and optimization for 50 epochs.
+    This runs on GPU the Transformer ViT on the Pavia University dataset with a patch size of 15, using 50% of the samples for training and optimization for 50 epochs
+
+## Citation   
+@ARTICLE{8340197,\
+  author={Yang, Xiaofei and Ye, Yunming and Li, Xutao and Lau, Raymond Y. K. and Zhang, Xiaofeng and Huang, Xiaohui},\
+  journal={IEEE Transactions on Geoscience and Remote Sensing}, \
+  title={Hyperspectral Image Classification With Deep Learning Models}, \
+  year={2018},\
+  volume={56},\
+  number={9},\
+  pages={5408-5423},\
+  keywords={Hyperspectral imaging;Machine learning;Kernel;Context modeling;Convolution;Task analysis;Convolutional neural network (CNN);deep learning;hyperspectral image},\
+  doi={10.1109/TGRS.2018.2815613}}
+
+ @ARTICLE{9766028,\
+  author={Yang, Xiaofei and Cao, Weijia and Lu, Yao and Zhou, Yicong},\
+  journal={IEEE Transactions on Geoscience and Remote Sensing}, \
+  title={Hyperspectral Image Transformer Classification Networks}, \
+  year={2022},\
+  volume={60},\
+  number={},\
+  pages={1-15},\
+  keywords={Transformers;Convolution;Three-dimensional displays;Feature extraction;Task analysis;Data mining;Hyperspectral imaging;3-D convolution projection;convolution neural network (CNN);hyperspectral image (HSI) classification;transformers},\
+  doi={10.1109/TGRS.2022.3171551}}
+
+@ARTICLE{10144788,\
+  author={Yang, Xiaofei and Cao, Weijia and Lu, Yao and Zhou, Yicong},\
+  journal={IEEE Transactions on Circuits and Systems for Video Technology}, \
+  title={QTN: Quaternion Transformer Network for Hyperspectral Image Classification}, \
+  year={2023},\
+  volume={33},\
+  number={12},\
+  pages={7370-7384},\
+  keywords={Transformers;Hyperspectral imaging;Image classification;Quaternions;Feature extraction;Convolutional neural networks;Hyperspectral image classification;convolution neural network;transformer network;quaternion transformer network (QTN)},\
+  doi={10.1109/TCSVT.2023.3283289}}
+
+@ARTICLE{9966805,\
+  author={Yang, Xiaofei and Cao, Weijia and Lu, Yao and Zhou, Yicong},\
+  journal={IEEE Transactions on Geoscience and Remote Sensing}, \
+  title={Self-Supervised Learning With Prediction of Image Scale and Spectral Order for Hyperspectral Image Classification}, \
+  year={2022},\
+  volume={60},\
+  number={},\
+  pages={1-15},\
+  keywords={Task analysis;Hyperspectral imaging;Self-supervised learning;Feature extraction;Convolutional neural networks;Supervised learning;Generative adversarial networks;Hyperspectral image (HSI) classification;limited labeled samples;self-supervised learning (SSL);unsupervised learning},\
+  doi={10.1109/TGRS.2022.3225663}}
+
+@article{li2024rdtn,\
+  title={RDTN: Residual Densely Transformer Network for hyperspectral image classification},\
+  author={Li, Yan and Yang, Xiaofei and Tang, Dong and Zhou, Zheng},\
+  journal={Expert Systems with Applications},\
+  volume={250},\
+  pages={123939},\
+  year={2024},\
+  publisher={Elsevier}\
+}
 
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/nshaud)
 
-@ARTICLE{8340197,
-  author={Yang, Xiaofei and Ye, Yunming and Li, Xutao and Lau, Raymond Y. K. and Zhang, Xiaofeng and Huang, Xiaohui},
-  journal={IEEE Transactions on Geoscience and Remote Sensing}, 
-  title={Hyperspectral Image Classification With Deep Learning Models}, 
-  year={2018},
-  volume={56},
-  number={9},
-  pages={5408-5423},
-  keywords={Hyperspectral imaging;Machine learning;Kernel;Context modeling;Convolution;Task analysis;Convolutional neural network (CNN);deep learning;hyperspectral image},
-  doi={10.1109/TGRS.2018.2815613}}
-
- @ARTICLE{9766028,
-  author={Yang, Xiaofei and Cao, Weijia and Lu, Yao and Zhou, Yicong},
-  journal={IEEE Transactions on Geoscience and Remote Sensing}, 
-  title={Hyperspectral Image Transformer Classification Networks}, 
-  year={2022},
-  volume={60},
-  number={},
-  pages={1-15},
-  keywords={Transformers;Convolution;Three-dimensional displays;Feature extraction;Task analysis;Data mining;Hyperspectral imaging;3-D convolution projection;convolution neural network (CNN);hyperspectral image (HSI) classification;transformers},
-  doi={10.1109/TGRS.2022.3171551}}
-
-@ARTICLE{10144788,
-  author={Yang, Xiaofei and Cao, Weijia and Lu, Yao and Zhou, Yicong},
-  journal={IEEE Transactions on Circuits and Systems for Video Technology}, 
-  title={QTN: Quaternion Transformer Network for Hyperspectral Image Classification}, 
-  year={2023},
-  volume={33},
-  number={12},
-  pages={7370-7384},
-  keywords={Transformers;Hyperspectral imaging;Image classification;Quaternions;Feature extraction;Convolutional neural networks;Hyperspectral image classification;convolution neural network;transformer network;quaternion transformer network (QTN)},
-  doi={10.1109/TCSVT.2023.3283289}}
-
-@ARTICLE{9966805,
-  author={Yang, Xiaofei and Cao, Weijia and Lu, Yao and Zhou, Yicong},
-  journal={IEEE Transactions on Geoscience and Remote Sensing}, 
-  title={Self-Supervised Learning With Prediction of Image Scale and Spectral Order for Hyperspectral Image Classification}, 
-  year={2022},
-  volume={60},
-  number={},
-  pages={1-15},
-  keywords={Task analysis;Hyperspectral imaging;Self-supervised learning;Feature extraction;Convolutional neural networks;Supervised learning;Generative adversarial networks;Hyperspectral image (HSI) classification;limited labeled samples;self-supervised learning (SSL);unsupervised learning},
-  doi={10.1109/TGRS.2022.3225663}}
-
-@article{li2024rdtn,
-  title={RDTN: Residual Densely Transformer Network for hyperspectral image classification},
-  author={Li, Yan and Yang, Xiaofei and Tang, Dong and Zhou, Zheng},
-  journal={Expert Systems with Applications},
-  volume={250},
-  pages={123939},
-  year={2024},
-  publisher={Elsevier}
-}
